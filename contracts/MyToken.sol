@@ -6,12 +6,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 // https://github.com/HashLips/hashlips_nft_contract/blob/main/contract/SimpleNft.sol
+// https://www.freecodecamp.org/news/how-to-implement-whitelist-in-smartcontracts-erc-721-nft-erc-1155-and-others/
 contract MyToken is ERC721Enumerable, Ownable {
     using Strings for uint256;
 
     uint256 public cost = 0.05 ether;
     uint256 public maxSupply = 777;
     uint256 public maxMintAmount = 20;
+    mapping(address => bool) public whitelist;
 
     constructor() ERC721("MyToken", "MTK") {}
 
@@ -19,6 +21,7 @@ contract MyToken is ERC721Enumerable, Ownable {
 
     function mint(uint256 _mintAmount) public payable {
         uint256 supply = totalSupply();
+        require(whitelist[msg.sender], "NOT_IN_WHITELIST");
         require(_mintAmount > 0);
         require(_mintAmount <= maxMintAmount);
         require(supply + _mintAmount <= maxSupply);
@@ -63,5 +66,21 @@ contract MyToken is ERC721Enumerable, Ownable {
 
     function withdraw() public onlyOwner {
         payable(owner()).transfer(address(this).balance);
+    }
+
+    function addToWhitelist(
+        address[] calldata toAddAddresses
+    ) external onlyOwner {
+        for (uint i = 0; i < toAddAddresses.length; i++) {
+            whitelist[toAddAddresses[i]] = true;
+        }
+    }
+
+    function removeFromWhitelist(
+        address[] calldata toRemoveAddresses
+    ) external onlyOwner {
+        for (uint i = 0; i < toRemoveAddresses.length; i++) {
+            delete whitelist[toRemoveAddresses[i]];
+        }
     }
 }

@@ -12,6 +12,7 @@ describe("MyToken", function () {
     const myToken = await MyToken.deploy();
 
     await myToken.deployed();
+    await myToken.addToWhitelist([otherAccount.address]);
 
     return { myToken, owner, otherAccount };
   }
