@@ -4,21 +4,30 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 // https://github.com/HashLips/hashlips_nft_contract/blob/main/contract/SimpleNft.sol
+// https://dev.to/envoy_/implement-gasless-whitelist-in-your-nft-contract-4j4l
 contract MyToken is ERC721Enumerable, Ownable {
     using Strings for uint256;
 
     uint256 public cost = 0.05 ether;
     uint256 public maxSupply = 777;
     uint256 public maxMintAmount = 20;
+    bytes32 public root;
 
-    constructor() ERC721("MyToken", "MTK") {}
+    constructor(bytes32 _root) ERC721("MyToken", "MTK") {
+        root = _root;
+    }
 
     string private baseUri;
 
-    function mint(uint256 _mintAmount) public payable {
+    function mint(uint256 _mintAmount, bytes32[] memory proof) public payable {
         uint256 supply = totalSupply();
+        require(
+            isWhitelisted(proof, keccak256(abi.encodePacked(msg.sender))),
+            "NOT_IN_WHITELIST"
+        );
         require(_mintAmount > 0);
         require(_mintAmount <= maxMintAmount);
         require(supply + _mintAmount <= maxSupply);
@@ -63,5 +72,12 @@ contract MyToken is ERC721Enumerable, Ownable {
 
     function withdraw() public onlyOwner {
         payable(owner()).transfer(address(this).balance);
+    }
+
+    function isWhitelisted(
+        bytes32[] memory proof,
+        bytes32 leaf
+    ) public view returns (bool) {
+        return MerkleProof.verify(proof, root, leaf);
     }
 }
