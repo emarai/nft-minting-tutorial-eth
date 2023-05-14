@@ -1,6 +1,7 @@
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const BN = require("bn.js");
 
 describe("MyToken", function () {
   async function deployContract() {
@@ -41,6 +42,32 @@ describe("MyToken", function () {
       const ownerOfToken = await myToken.walletOfOwner(otherAccount.address);
       expect(ownerOfToken[0]).to.equal(1);
       expect(ownerOfToken[ownerOfToken.length - 1]).to.equal(20);
+    });
+
+    it("Should withdraw", async function () {
+      const { myToken, owner, otherAccount } = await loadFixture(
+        deployContract
+      );
+
+      await myToken
+        .connect(otherAccount)
+        .mint(20, { value: ethers.utils.parseEther((0.05 * 20).toString()) });
+
+      const tokenBalanceBefore = await ethers.provider.getBalance(
+        myToken.address
+      );
+
+      await myToken.withdraw();
+
+      const tokenBalanceAfter = await ethers.provider.getBalance(
+        myToken.address
+      );
+
+      expect(tokenBalanceAfter.toString()).to.be.eq(
+        tokenBalanceBefore
+          .sub(ethers.utils.parseEther((0.05 * 20).toString()))
+          .toString()
+      );
     });
 
     it("Should set baseUri", async function () {

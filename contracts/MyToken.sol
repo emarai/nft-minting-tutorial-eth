@@ -60,4 +60,8 @@ contract MyToken is ERC721Enumerable, Ownable {
                 ? string(abi.encodePacked(baseURI, tokenId.toString(), ".json"))
                 : "";
     }
+
+    function withdraw() public onlyOwner {
+        payable(owner()).transfer(address(this).balance);
+    }
 }
