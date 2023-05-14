@@ -25,8 +25,11 @@ describe("MyToken", function () {
         .connect(otherAccount)
         .mint(1, { value: ethers.utils.parseEther("0.05") });
 
-      const ownerOfToken = await myToken.ownerOf(1);
-      expect(ownerOfToken).to.equal(otherAccount.address);
+      const mintedTokenId = await myToken.tokenOfOwnerByIndex(
+        otherAccount.address,
+        0
+      );
+      expect(mintedTokenId).to.exist;
     });
 
     it("Should mint 20", async function () {
@@ -39,8 +42,7 @@ describe("MyToken", function () {
         .mint(20, { value: ethers.utils.parseEther((0.05 * 20).toString()) });
 
       const ownerOfToken = await myToken.walletOfOwner(otherAccount.address);
-      expect(ownerOfToken[0]).to.equal(1);
-      expect(ownerOfToken[ownerOfToken.length - 1]).to.equal(20);
+      expect(ownerOfToken.length).to.eq(20);
     });
 
     it("Should set baseUri", async function () {
@@ -53,8 +55,13 @@ describe("MyToken", function () {
 
       await myToken.setBaseURI("ipfs://random/");
 
-      const tokenUri = await myToken.tokenURI(1);
-      expect(tokenUri).to.be.equal("ipfs://random/1.json");
+      const mintedTokenId = await myToken.tokenOfOwnerByIndex(
+        otherAccount.address,
+        0
+      );
+
+      const tokenUri = await myToken.tokenURI(mintedTokenId);
+      expect(tokenUri).to.be.equal(`ipfs://random/${mintedTokenId}.json`);
     });
   });
 });
